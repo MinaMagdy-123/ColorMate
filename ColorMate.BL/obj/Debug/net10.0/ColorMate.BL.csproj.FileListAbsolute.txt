@@ -1,0 +1,17 @@
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\bin\Debug\net10.0\ColorMate.BL.deps.json
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\bin\Debug\net10.0\ColorMate.BL.dll
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\bin\Debug\net10.0\ColorMate.BL.pdb
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\bin\Debug\net10.0\ColorMate.Core.dll
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\bin\Debug\net10.0\ColorMate.EF.dll
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\bin\Debug\net10.0\ColorMate.Core.pdb
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\bin\Debug\net10.0\ColorMate.EF.pdb
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMate.BL.csproj.AssemblyReference.cache
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMate.BL.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMate.BL.AssemblyInfoInputs.cache
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMate.BL.AssemblyInfo.cs
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMate.BL.csproj.CoreCompileInputs.cache
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMat.075770C6.Up2Date
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMate.BL.dll
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\refint\ColorMate.BL.dll
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ColorMate.BL.pdb
+C:\Users\Mina\source\repos\ColorMate\ColorMate.BL\obj\Debug\net10.0\ref\ColorMate.BL.dll
