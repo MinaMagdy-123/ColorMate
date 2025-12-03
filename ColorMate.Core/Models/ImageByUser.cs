@@ -11,8 +11,7 @@ namespace ColorMate.Core.Models
         public OutfitRating OutfitRating { get; set; }
 
         public string ApplicationUserId { get; set; }
-        public ApplicationUser ApplicaationUser { get; set; }
-
+        public ApplicationUser ApplicationUser { get; set; }
         public byte[]? ProcessedImageByFilter { get; set; }
 
         public int? FilterId { get; set; }

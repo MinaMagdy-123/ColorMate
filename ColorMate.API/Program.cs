@@ -1,11 +1,16 @@
+using ColorMate.BL.EmailService;
+using ColorMate.BL.FacebookService;
 using ColorMate.BL.UserService;
 using ColorMate.Core.Models;
 using ColorMate.EF;
 using ColorMate.EF.Repositories.Base;
 using ColorMate.EF.Repositories.User;
 using ColorMate.EF.UnitOfWork;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -32,12 +37,20 @@ namespace ColorMate.API
             builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
             builder.Services.AddTransient<IUserRepository, UserRepository>();
             builder.Services.AddTransient<IUserService, UserService>();
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
+            builder.Services.AddScoped<IFacebookAuthService, FacebookAuthService>();
 
+            builder.Services.AddHttpClient();
 
 
             //-----------------------Authentication----------------------------
 
-            builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(
+                options =>
+                {
+                    options.SignIn.RequireConfirmedEmail= true;
+                }
+                ).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
 
             builder.Services.AddAuthentication(options =>
@@ -46,7 +59,25 @@ namespace ColorMate.API
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; //unauthorize response
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options => //verified key
+            }).AddGoogle(options =>
+            {
+                var ClientId = builder.Configuration["Authentication:Google:ClientId"];
+                var ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+
+
+                options.ClientId = ClientId;
+                options.ClientSecret = ClientSecret;
+
+            }).AddFacebook(facebookOptions =>
+            {
+                var AppId = builder.Configuration["Authentication:Facebook:AppId"];
+                var AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+                facebookOptions.AppId = AppId;
+                facebookOptions.AppSecret = AppSecret;
+
+            })
+            .AddJwtBearer(options => //verified key
             {
                 options.SaveToken = true;
                 options.RequireHttpsMetadata = false;
@@ -59,6 +90,7 @@ namespace ColorMate.API
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecritKey"] ?? string.Empty))
                 };
             });
+          
 
             //-----------------------Cors Policy------------------------
 
@@ -74,9 +106,13 @@ namespace ColorMate.API
 
             });
 
-
-
-
+            //var Google = builder.Configuration.GetSection("Authentication:Google");
+            //builder.Services.AddAuthentication().AddGoogle(options =>
+            //{
+            //    options.ClientId = Google["ClientId"]!;
+            //    options.ClientSecret = Google["ClientSecret"]!;
+            //    options.CallbackPath = "/signin-google";
+            //});
 
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             //builder.Services.AddOpenApi();
