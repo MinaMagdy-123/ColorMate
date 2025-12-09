@@ -36,7 +36,7 @@ namespace ColorMate.BL.FacebookService
             return JsonConvert.DeserializeObject<FacebookUserInfoResult>(content);
         }
 
-        public async Task<FacebookTokenValidationResult> ValitadeAccessTokenAsync(string accessToken)
+        public async Task<FacebookTokenValidationResult> ValidateAccessTokenAsync(string accessToken)
         {
             var FormattedUrl = string.Format(TokenValidationUrl, accessToken, AppId, AppSecret);
             var result = await _httpClientFactory.CreateClient().GetAsync(FormattedUrl);

@@ -59,8 +59,8 @@ namespace ColorMate.API.Controllers
         {
             var user = await _userService.CheckLoginAsync(loginDto);
 
-            if (user == null)
-                return BadRequest("Invalid credentials");
+            if (user == null || !user.EmailConfirmed)
+                return BadRequest("Invalid credentials or email not confirmed");
 
             var token = await _userService.GenerateTokenAsync(user);
 
@@ -94,48 +94,34 @@ namespace ColorMate.API.Controllers
             {
                 return Unauthorized("Invalid Google token");
             }
-            // Google user information
-            var googleEmail = payload.Email;
-            var googleFName = payload.Name;
-            var googleLname = payload.GivenName;
 
-            // Login or Register inside your system
+            var googleEmail = payload.Email;
+            var googleFirstName = payload.GivenName;
+            var googleLastName = payload.FamilyName;
+            var googlePicture = payload.Picture;
+            var googleSubject = payload.Subject;
+
+
             var user = await _userService.LoginWithGoogleAsync(new GoogleUserDto
             {
                 Email = googleEmail,
-                fName = googleFName,
-                lName = googleLname,
-                
+                FirstName = googleFirstName,
+                LastName = googleLastName,
+                PictureUrl = googlePicture,
+                Subject = googleSubject
             });
 
             if (user == null)
                 return BadRequest("Failed to login/register with Google");
 
-            // Generate your JWT
             var token = await _userService.GenerateTokenAsync(user);
-
             return Ok(new
             {
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 Expiration = token.ValidTo
             });
         }
-
-        [HttpPost("TestGoogleLogin")]
-        public async Task<IActionResult> TestGoogleLogin([FromBody] GoogleUserDto googleUser)
-        {
-            var user = await _userService.LoginWithGoogleAsync(googleUser);
-            var token = await _userService.GenerateTokenAsync(user);
-
-            return Ok(new
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = token.ValidTo,
-                FullName = $"{user.FirstName} {user.LastName}",
-                Email = user.Email
-            });
-        }
-
+       
 
         [HttpPost("LoginWithFacebook")]
         public async Task<IActionResult> LoginWithFacebook([FromBody] FacebookLoginDto facebookLoginDto)
@@ -143,32 +129,29 @@ namespace ColorMate.API.Controllers
             if (string.IsNullOrWhiteSpace(facebookLoginDto.AccessToken))
                 return BadRequest("Facebook access token is required");
 
-            var user =  await _userService.LoginWithFacebookAsync(facebookLoginDto.AccessToken);
-            if(user == null)
+            try
             {
-                return BadRequest("Failed to login/register by Facebook");
+                var user = await _userService.LoginWithFacebookAsync(facebookLoginDto.AccessToken);
+                if (user == null)
+                {
+                    return BadRequest("Failed to login/register by Facebook");
+                }
+
+                var token = await _userService.GenerateTokenAsync(user);
+
+                return Ok(new
+                {
+                    Token = new JwtSecurityTokenHandler().WriteToken(token),
+                    Expiration = token.ValidTo,
+                    User = new { user.Id, user.UserName, user.Email, user.FirstName, user.LastName, user.ProfilePictureUrl }
+                });
+            }
+            catch
+            {
+                return Unauthorized("Invalid Facebook token");
             }
 
-            var token = await _userService.GenerateTokenAsync(user);
-
-            return Ok(new
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = token.ValidTo,
-                User = new
-                {
-                    user.Id,
-                    user.UserName,
-                    user.Email,
-                    user.FirstName,
-                    user.LastName,
-                    user.ProfilePictureUrl
-                }
-            });
-
         }
-
-
 
     }
 }

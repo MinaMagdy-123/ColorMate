@@ -121,6 +121,7 @@ namespace ColorMate.BL.UserService
 
 
 
+        // Corrected Service Method
         public async Task<ApplicationUser> LoginWithGoogleAsync(GoogleUserDto googleUser)
         {
             var user = await _userManager.FindByEmailAsync(googleUser.Email);
@@ -131,20 +132,22 @@ namespace ColorMate.BL.UserService
                 {
                     UserName = googleUser.Email,
                     Email = googleUser.Email,
-                    FirstName = googleUser.fName,
-                    LastName = googleUser.lName,
-                    LoginProvider = "Google",
-                    ProfilePictureUrl = googleUser.PictureUrl
-
+                    FirstName = googleUser.FirstName,
+                    LastName = googleUser.LastName,
+                   LoginProvider= "Google",
+                    ProfilePictureUrl = googleUser.PictureUrl,
+                    EmailConfirmed = true
                 };
-                await _userManager.AddLoginAsync(user, new UserLoginInfo(
-                      "Google",
-                       googleUser.Email,
-                       "Google"
-       ));
-                var createuser = await _userManager.CreateAsync(user);
-                if (!createuser.Succeeded)
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
                     return null;
+                
+                await _userManager.AddLoginAsync(user, new UserLoginInfo(
+                    "Google",
+                    googleUser.Subject, 
+                    "Google"
+                ));
             }
 
             return user;
@@ -152,10 +155,9 @@ namespace ColorMate.BL.UserService
 
 
 
-
         public async Task<ApplicationUser> LoginWithFacebookAsync(string accessToken)
         {
-            var validateTokenResult = await _facebookAuthService.ValitadeAccessTokenAsync(accessToken);
+            var validateTokenResult = await _facebookAuthService.ValidateAccessTokenAsync(accessToken);
             if (!validateTokenResult.Data.IsValid)
             {
                 return null;
@@ -171,7 +173,8 @@ namespace ColorMate.BL.UserService
                     LastName = userInfo.LastName,
                     UserName = userInfo.Email,
                     LoginProvider = "Facebook",
-                    ProfilePictureUrl = userInfo.FacebookPicture.Data.Url.ToString()
+                    ProfilePictureUrl = userInfo.FacebookPicture.Data.Url.ToString(),
+                    EmailConfirmed = true
                 };
 
                 var createdResult = await _userManager.CreateAsync(user);
@@ -179,6 +182,8 @@ namespace ColorMate.BL.UserService
                 {
                     return null;
                 }
+                await _userManager.AddLoginAsync(user, new UserLoginInfo("Facebook",
+                    validateTokenResult.Data.UserId, "Facebook"));  
             }
             return user;
         }

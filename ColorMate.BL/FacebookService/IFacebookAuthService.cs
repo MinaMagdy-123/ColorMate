@@ -7,7 +7,7 @@ namespace ColorMate.BL.FacebookService
 {
     public interface IFacebookAuthService
     {
-        Task<FacebookTokenValidationResult> ValitadeAccessTokenAsync(string accessToken);
+        Task<FacebookTokenValidationResult> ValidateAccessTokenAsync(string accessToken);
         Task<FacebookUserInfoResult> GetUserInfoAsync(string accessToken);
     }
 }
