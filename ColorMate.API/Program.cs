@@ -32,6 +32,8 @@ namespace ColorMate.API
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
+            builder.Services.Configure<BL.Settings.JWT>(builder.Configuration.GetSection("JWT"));
+
 
             builder.Services.AddTransient(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
@@ -77,20 +79,23 @@ namespace ColorMate.API
                 facebookOptions.AppSecret = AppSecret;
 
             })
-            .AddJwtBearer(options => //verified key
+            .AddJwtBearer(o =>
             {
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new TokenValidationParameters()
+                o.RequireHttpsMetadata = false;
+                o.SaveToken = false;
+                o.TokenValidationParameters = new TokenValidationParameters
                 {
+                    ValidateIssuerSigningKey = true,
                     ValidateIssuer = true,
-                    ValidIssuer = builder.Configuration["JWT:IssuerURL"],
                     ValidateAudience = true,
-                    ValidAudience = builder.Configuration["JWT:AudienceURL"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecritKey"] ?? string.Empty))
+                    ValidateLifetime = true,
+                    ValidIssuer = builder.Configuration["JWT:Issuer"],
+                    ValidAudience = builder.Configuration["JWT:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+                    ClockSkew = TimeSpan.Zero
                 };
             });
-          
+
 
             //-----------------------Cors Policy------------------------
 

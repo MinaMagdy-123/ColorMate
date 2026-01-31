@@ -3,10 +3,13 @@ using ColorMate.Core.DTOs;
 using ColorMate.Core.DTOs.FacebookDto;
 using ColorMate.Core.Models;
 using Google.Apis.Auth;
+using JWT.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace ColorMate.API.Controllers
 {
@@ -20,8 +23,10 @@ namespace ColorMate.API.Controllers
         private readonly IEmailSender _emailSender;
 
 
-
-        public UsersController(IUserService userService, IConfiguration config, UserManager<ApplicationUser> userManager, IEmailSender emailSender)
+        public UsersController(IUserService userService,
+            IConfiguration config,
+            UserManager<ApplicationUser> userManager,
+            IEmailSender emailSender)
         {
             _userService = userService;
             _config = config;
@@ -54,23 +59,88 @@ namespace ColorMate.API.Controllers
 
 
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login(LoginDto loginDto)
+        //------------------------ Mina ----------------------------
+
+        /*
+        [HttpPost("registerV2")]
+        public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto registerDto)
         {
-            var user = await _userService.CheckLoginAsync(loginDto);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (user == null || !user.EmailConfirmed)
-                return BadRequest("Invalid credentials or email not confirmed");
+            var result = await _userService.RegisterAsync(registerDto);
 
-            var token = await _userService.GenerateTokenAsync(user);
+            if (!result.IsAuthenticated)
+                return BadRequest(result.Message);
 
-            return Ok(new
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = token.ValidTo
-            });
+            //SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
+
+            return Ok(result);
+        }
+        */
+
+
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        {
+            var result = await _userService.GetTokenAsync(loginDto);
+
+            if (!result.IsAuthenticated)
+                return BadRequest(result.Message);
+
+            return Ok(result);
         }
 
+
+        [HttpPost("refreshToken")]
+        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        {
+
+            var result = await _userService.RefreshTokenAsync(refreshToken);
+
+            if (!result.IsAuthenticated)
+                return BadRequest(result);
+
+
+            return Ok(result);
+        }
+
+
+        [HttpPost("revokeToken")]
+        public async Task<IActionResult> RevokeToken([FromBody] RevokeTokenDto revokeTokenDto)
+        {
+            var token = revokeTokenDto.Token;
+
+            if (string.IsNullOrEmpty(token))
+                return BadRequest("Token is required!");
+
+            var result = await _userService.RevokeTokenAsync(token);
+
+            if (!result)
+                return BadRequest("Token is invalid!");
+
+            return Ok();
+        }
+
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var result = await _userService.ChangePasswordAsync(userId, dto);
+
+            if (!result.IsAuthenticated)
+                return BadRequest(result.Message);
+
+            return Ok(result);
+        }
+
+
+        //-----------------------------------------------------------
 
 
         [HttpPost("LoginWithGoogle")]
@@ -114,12 +184,8 @@ namespace ColorMate.API.Controllers
             if (user == null)
                 return BadRequest("Failed to login/register with Google");
 
-            var token = await _userService.GenerateTokenAsync(user);
-            return Ok(new
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = token.ValidTo
-            });
+            var authResult = await _userService.GenerateAuthResultAsync(user);
+            return Ok(authResult);
         }
        
 
@@ -137,14 +203,8 @@ namespace ColorMate.API.Controllers
                     return BadRequest("Failed to login/register by Facebook");
                 }
 
-                var token = await _userService.GenerateTokenAsync(user);
-
-                return Ok(new
-                {
-                    Token = new JwtSecurityTokenHandler().WriteToken(token),
-                    Expiration = token.ValidTo,
-                    User = new { user.Id, user.UserName, user.Email, user.FirstName, user.LastName, user.ProfilePictureUrl }
-                });
+                var authResult = await _userService.GenerateAuthResultAsync(user);
+                return Ok(authResult);
             }
             catch
             {

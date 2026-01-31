@@ -1,5 +1,6 @@
 ﻿using ColorMate.Core.DTOs;
 using ColorMate.Core.Models;
+using JWT.DTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Identity.Client;
 using System;
@@ -12,11 +13,29 @@ namespace ColorMate.BL.UserService
 {
     public interface IUserService
     {
+
         Task<(IdentityResult Result, ApplicationUser User, string? Otp)> RegisterUserAsync(RegisterDto registerDto);
 
-        Task<ApplicationUser?> CheckLoginAsync(LoginDto loginDto);
 
-        Task<JwtSecurityToken> GenerateTokenAsync(ApplicationUser user);
+        //---------------------- Mina ----------------------
+
+        //Task<AuthDto> RegisterAsync(RegisterDto registerDto);
+
+        Task<AuthDto> GetTokenAsync(LoginDto loginDto);
+
+        Task<JwtSecurityToken> CreateJwtToken(ApplicationUser user);
+
+        Task<AuthDto> RefreshTokenAsync(string token);
+
+        Task<bool> RevokeTokenAsync(string token);
+
+        RefreshToken GenerateRefreshToken();
+
+        Task<AuthDto> GenerateAuthResultAsync(ApplicationUser user);
+
+        Task<AuthDto> ChangePasswordAsync(string userId, ChangePasswordDto dto);
+
+        //---------------------------------------------------
 
 
         Task<ApplicationUser> LoginWithGoogleAsync(GoogleUserDto googleUser);

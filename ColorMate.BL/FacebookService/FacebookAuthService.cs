@@ -15,8 +15,8 @@ namespace ColorMate.BL.FacebookService
        private const string UserInfoUrl = "https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,picture&access_token={0}";
 
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly string AppId;
-        private readonly string AppSecret;
+        public readonly string AppId;
+        public readonly string AppSecret;
 
         public FacebookAuthService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {

@@ -1,16 +1,21 @@
 ﻿using ColorMate.BL.FacebookService;
+using ColorMate.BL.Settings;
 using ColorMate.Core.DTOs;
 using ColorMate.Core.Models;
 using ColorMate.EF.Repositories.User;
 using ColorMate.EF.UnitOfWork;
+using JWT.DTOs;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ColorMate.BL.UserService
@@ -22,20 +27,25 @@ namespace ColorMate.BL.UserService
         private readonly UserManager<ApplicationUser> _userManager; // add user
         private readonly SignInManager<ApplicationUser> _signInManager; // sign in
         private readonly IConfiguration config;
+        private readonly Settings.JWT _jwt;
         private readonly IFacebookAuthService _facebookAuthService;
 
 
         public UserService(IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
+            IOptions<Settings.JWT> jwt,
             IConfiguration config,IFacebookAuthService facebookAuthService )
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _signInManager = signInManager;
+            _jwt = jwt.Value;
             this.config = config;
             _facebookAuthService = facebookAuthService;
         }
+
+
 
         public async Task<(IdentityResult Result, ApplicationUser User, string? Otp)> RegisterUserAsync(RegisterDto registerDto)
         {
@@ -45,7 +55,8 @@ namespace ColorMate.BL.UserService
                 LastName = registerDto.LastName,
                 UserName = registerDto.UserName,
                 Email = registerDto.Email,
-                LoginProvider= "Local"
+                LoginProvider= "Local",
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
@@ -64,60 +75,259 @@ namespace ColorMate.BL.UserService
         }
 
 
+        //------------------------ Mina ----------------------------
 
+        /*
 
+        //public async Task<AuthDto> RegisterAsync(RegisterDto registerDto)
+        //{
+        //    if (await _userManager.FindByEmailAsync(registerDto.Email) is not null)
+        //        return new AuthDto { Message = "Email is already registered!" };
 
-        public async Task<ApplicationUser?> CheckLoginAsync(LoginDto loginDto)
+        //    if (await _userManager.FindByNameAsync(registerDto.UserName) is not null)
+        //        return new AuthDto { Message = "Username is already registered!" };
+
+        //    var user = new ApplicationUser
+        //    {
+        //        UserName = registerDto.UserName,
+        //        Email = registerDto.Email,
+        //        FirstName = registerDto.FirstName,
+        //        LastName = registerDto.LastName,
+        //        LoginProvider = "Local"
+        //    };
+
+        //    var result = await _userManager.CreateAsync(user, registerDto.Password);
+
+        //    if (!result.Succeeded)
+        //    {
+        //        var errors = string.Join(",", result.Errors.Select(e => e.Description));
+        //        return new AuthDto { Message = errors };
+        //    }
+
+        //    // IMPORTANT: Reload user so EF tracks the entity properly
+        //    user = await _userManager.FindByIdAsync(user.Id);
+
+        //    var jwtSecurityToken = await CreateJwtToken(user);
+
+        //    var refreshToken = GenerateRefreshToken();
+        //    user.RefreshTokens.Add(refreshToken);
+        //    await _userManager.UpdateAsync(user);
+
+        //    return new AuthDto
+        //    {
+        //        Email = user.Email,
+        //        ExpiresOn = jwtSecurityToken.ValidTo,
+        //        IsAuthenticated = true,
+        //        Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
+        //        Username = user.UserName,
+        //        RefreshToken = refreshToken.Token,
+        //        RefreshTokenExpiration = refreshToken.ExpiresOn
+        //    };
+        //}
+        */
+
+        public async Task<AuthDto> GetTokenAsync(LoginDto loginDto)//login
         {
-            ApplicationUser? user = loginDto.UserName.Contains("@")
-                ? await _userManager.FindByEmailAsync(loginDto.UserName)
-                : await _userManager.FindByNameAsync(loginDto.UserName);
+
+            var user = loginDto.UserNameOrEmail.Contains('@')
+                ? await _userManager.FindByEmailAsync(loginDto.UserNameOrEmail)
+                : await _userManager.FindByNameAsync(loginDto.UserNameOrEmail);
+
+            if (user is null || !await _userManager.CheckPasswordAsync(user, loginDto.Password))
+            {
+                return new AuthDto { Message = "Email or Password is incorrect!" };
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                return new AuthDto { Message = "Please verify your email before logging in." };
+            }
+
+            var authDto = await GenerateAuthResultAsync(user);
+
+            return authDto;
+        }
+
+        public async Task<JwtSecurityToken> CreateJwtToken(ApplicationUser user)
+        {
+            var userClaims = await _userManager.GetClaimsAsync(user);
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim("Provider", user.LoginProvider ?? "Local")
+            }
+            .Union(userClaims);
+
+            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
+            var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
+
+            var jwtSecurityToken = new JwtSecurityToken(
+                issuer: _jwt.Issuer,
+                audience: _jwt.Audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(_jwt.DurationInMinutes),
+                signingCredentials: signingCredentials);
+
+            return jwtSecurityToken;
+        }
+
+        public async Task<AuthDto> RefreshTokenAsync(string token)
+        {
+            var authDto = new AuthDto();
+
+            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
 
             if (user == null)
-                return null;
+            {
+                authDto.Message = "Invalid token";
+                return authDto;
+            }
 
-            bool isValid = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+            var refreshToken = user.RefreshTokens.Single(t => t.Token == token);
 
-            return isValid ? user : null;
-        }
+            if (!refreshToken.IsActive)
+            {
+                authDto.Message = "Inactive token";
+                return authDto;
+            }
 
+            refreshToken.RevokedOn = DateTime.UtcNow;
 
+            var newRefreshToken = GenerateRefreshToken();
+            user.RefreshTokens.Add(newRefreshToken);
+            await _userManager.UpdateAsync(user);
 
-
-
-        public async Task<JwtSecurityToken> GenerateTokenAsync(ApplicationUser user)
-        {
-            var claims = new List<Claim>
-    {
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(ClaimTypes.NameIdentifier, user.Id),
-        new Claim(ClaimTypes.Name, user.UserName ?? ""),
-         new Claim("Provider", user.LoginProvider ?? "Local") 
-    };
-
-            // Add roles if exist
+            var jwtToken = await CreateJwtToken(user);
+            authDto.IsAuthenticated = true;
+            authDto.Token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+            authDto.Email = user.Email;
+            authDto.Username = user.UserName;
             var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-                claims.Add(new Claim(ClaimTypes.Role, role));
+            //authDto.Roles = roles.ToList();
+            authDto.RefreshToken = newRefreshToken.Token;
+            authDto.RefreshTokenExpiration = newRefreshToken.ExpiresOn;
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(config["JWT:SecritKey"]!)
+            return authDto;
+        }
+
+        public async Task<bool> RevokeTokenAsync(string token)
+        {
+            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
+
+            if (user == null)
+                return false;
+
+            var refreshToken = user.RefreshTokens.Single(t => t.Token == token);
+
+            if (!refreshToken.IsActive)
+                return false;
+
+            refreshToken.RevokedOn = DateTime.UtcNow;
+
+            await _userManager.UpdateAsync(user);
+
+            return true;
+        }
+
+        public RefreshToken GenerateRefreshToken()
+        {
+            var bytes = new byte[32];
+
+            var generator = RandomNumberGenerator.Create();
+
+            generator.GetBytes(bytes);
+
+            return new RefreshToken
+            {
+                Token = Convert.ToBase64String(bytes),
+                ExpiresOn = DateTime.UtcNow.AddDays(10),
+                CreatedOn = DateTime.UtcNow
+            };
+        }
+
+        public async Task<AuthDto> GenerateAuthResultAsync(ApplicationUser user)
+        {
+
+            var authDto = new AuthDto();
+
+            var jwtSecurityToken = await CreateJwtToken(user);
+
+
+            authDto.IsAuthenticated = true;
+            authDto.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+            authDto.Email = user.Email;
+            authDto.Username = user.UserName;
+            authDto.ExpiresOn = jwtSecurityToken.ValidTo;
+
+
+            if (user.RefreshTokens.Any(t => t.IsActive))
+            {
+                var activeRefreshToken = user.RefreshTokens.FirstOrDefault(t => t.IsActive);
+                authDto.RefreshToken = activeRefreshToken.Token;
+                authDto.RefreshTokenExpiration = activeRefreshToken.ExpiresOn;
+            }
+            else
+            {
+                var refreshToken = GenerateRefreshToken();
+                authDto.RefreshToken = refreshToken.Token;
+                authDto.RefreshTokenExpiration = refreshToken.ExpiresOn;
+                user.RefreshTokens.Add(refreshToken);
+                await _userManager.UpdateAsync(user);
+            }
+
+            return authDto;
+        }
+
+        public async Task<AuthDto> ChangePasswordAsync(string userId, ChangePasswordDto dto)
+        {
+            var authDto = new AuthDto();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                authDto.Message = "User not found";
+                return authDto;
+            }
+
+            // 🔒 verify old password
+            var passwordCheck = await _userManager.CheckPasswordAsync(user, dto.CurrentPassword);
+            if (!passwordCheck)
+            {
+                authDto.Message = "Current password is incorrect";
+                return authDto;
+            }
+
+            // 🔄 change password
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                dto.CurrentPassword,
+                dto.NewPassword
             );
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            if (!result.Succeeded)
+            {
+                authDto.Message = string.Join(", ", result.Errors.Select(e => e.Description));
+                return authDto;
+            }
 
-            var token = new JwtSecurityToken(
-                issuer: config["JWT:IssuerURL"],
-                audience: config["JWT:AudienceURL"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: creds
-            );
+            // 🔐 revoke old refresh tokens (important!)
+            foreach (var token in user.RefreshTokens)
+            {
+                token.RevokedOn = DateTime.UtcNow;
+            }
 
-            return token;
+            await _userManager.UpdateAsync(user);
+
+            // 🔑 issue new tokens
+            return await GenerateAuthResultAsync(user);
         }
 
 
+        //-----------------------------------------------------------
 
 
 
@@ -162,18 +372,43 @@ namespace ColorMate.BL.UserService
             {
                 return null;
             }
+            //var userInfo = await _facebookAuthService.GetUserInfoAsync(accessToken);
+
+            //var user = await _userManager.FindByLoginAsync("Facebook", validateTokenResult.Data.UserId);
+            //if (user == null)
+            //{
+            //    user = new ApplicationUser
+            //    {
+            //        Email = userInfo.Email,
+            //        FirstName = userInfo.FirstName,
+            //        LastName = userInfo.LastName,
+            //        UserName = userInfo.Email,
+            //        LoginProvider = "Facebook",
+            //        ProfilePictureUrl = userInfo.FacebookPicture.Data.Url.ToString(),
+            //        EmailConfirmed = true
+            //    };
+
             var userInfo = await _facebookAuthService.GetUserInfoAsync(accessToken);
-            var user = await _userManager.FindByEmailAsync(userInfo.Email);
+            if (userInfo == null) return null;
+
+            string facebookUserId = validateTokenResult.Data.UserId;
+
+            var user = await _userManager.FindByLoginAsync("Facebook", facebookUserId);
+
             if (user == null)
             {
+                string safeEmail = string.IsNullOrEmpty(userInfo.Email)
+                    ? $"{facebookUserId}@facebook.com"
+                    : userInfo.Email;
+
                 user = new ApplicationUser
                 {
-                    Email = userInfo.Email,
-                    FirstName = userInfo.FirstName,
-                    LastName = userInfo.LastName,
-                    UserName = userInfo.Email,
+                    UserName = safeEmail,
+                    Email = safeEmail,
+                    FirstName = userInfo.FirstName ?? "Facebook",
+                    LastName = userInfo.LastName ?? "User",
                     LoginProvider = "Facebook",
-                    ProfilePictureUrl = userInfo.FacebookPicture.Data.Url.ToString(),
+                    ProfilePictureUrl = userInfo.FacebookPicture?.Data?.Url?.ToString() ?? "",
                     EmailConfirmed = true
                 };
 
@@ -183,9 +418,10 @@ namespace ColorMate.BL.UserService
                     return null;
                 }
                 await _userManager.AddLoginAsync(user, new UserLoginInfo("Facebook",
-                    validateTokenResult.Data.UserId, "Facebook"));  
+                    validateTokenResult.Data.UserId, "Facebook"));
             }
             return user;
         }
+
     }
 }

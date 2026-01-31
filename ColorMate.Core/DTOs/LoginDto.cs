@@ -8,7 +8,7 @@ namespace ColorMate.Core.DTOs
     public class LoginDto
     {
         [Required]
-        public string UserName { get; set; }
+        public string UserNameOrEmail { get; set; }
 
         [Required]
         [StringLength(100, MinimumLength = 6)]
