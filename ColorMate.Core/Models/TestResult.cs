@@ -15,7 +15,7 @@ namespace ColorMate.Core.Models
 
         public ICollection<UserAnswer> Answers { get; set; } = new HashSet<UserAnswer>();
 
-        public int ColorBlindTypeId { get; set; }
-        public ColorBlindType ColorBlindType { get; set; }
+        //public int ColorBlindTypeId { get; set; }
+        //public ColorBlindType ColorBlindType { get; set; }
     }
 }

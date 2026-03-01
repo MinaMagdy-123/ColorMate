@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ColorMate.EF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260301142929_InitialCreate")]
+    [Migration("20260301144243_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -354,7 +354,7 @@ namespace ColorMate.EF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("ColorBlindTypeId")
+                    b.Property<int?>("ColorBlindTypeId")
                         .HasColumnType("int");
 
                     b.Property<string>("Diagnosis")
@@ -619,15 +619,11 @@ namespace ColorMate.EF.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ColorMate.Core.Models.ColorBlindType", "ColorBlindType")
+                    b.HasOne("ColorMate.Core.Models.ColorBlindType", null)
                         .WithMany("TestResults")
-                        .HasForeignKey("ColorBlindTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ColorBlindTypeId");
 
                     b.Navigation("ApplicationUser");
-
-                    b.Navigation("ColorBlindType");
                 });
 
             modelBuilder.Entity("ColorMate.Core.Models.UserAnswer", b =>

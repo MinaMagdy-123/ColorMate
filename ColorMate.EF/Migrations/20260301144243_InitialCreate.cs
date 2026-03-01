@@ -247,7 +247,7 @@ namespace ColorMate.EF.Migrations
                     TestTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Diagnosis = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ColorBlindTypeId = table.Column<int>(type: "int", nullable: false)
+                    ColorBlindTypeId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -262,8 +262,7 @@ namespace ColorMate.EF.Migrations
                         name: "FK_TestResults_ColorBlindTypes_ColorBlindTypeId",
                         column: x => x.ColorBlindTypeId,
                         principalTable: "ColorBlindTypes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
