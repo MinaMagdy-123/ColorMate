@@ -1,5 +1,6 @@
 using ColorMate.BL.EmailService;
 using ColorMate.BL.FacebookService;
+using ColorMate.BL.TestService;
 using ColorMate.BL.UserService;
 using ColorMate.Core.Models;
 using ColorMate.EF;
@@ -41,6 +42,7 @@ namespace ColorMate.API
             builder.Services.AddTransient<IUserService, UserService>();
             builder.Services.AddTransient<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IFacebookAuthService, FacebookAuthService>();
+            builder.Services.AddTransient<ITestService, TestService>();
 
             builder.Services.AddHttpClient();
 

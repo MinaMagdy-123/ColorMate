@@ -20,8 +20,6 @@ namespace ColorMate.Core.Models
 
         public List<RefreshToken>? RefreshTokens { get; set; } = new List<RefreshToken>();
 
-
-        public ICollection<TestQuestionsByUser> TestQuestionsByUsers { get; set; } = new HashSet<TestQuestionsByUser>();
         public ICollection<ImageByUser> ImagesByUser { get; set; } = new HashSet<ImageByUser>();
 
         public ICollection<TestResult> TestResults { get; set; } = new HashSet<TestResult>();

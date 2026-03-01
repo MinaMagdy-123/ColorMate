@@ -1,4 +1,5 @@
-﻿using ColorMate.EF.Repositories.Base;
+﻿using ColorMate.Core.Models;
+using ColorMate.EF.Repositories.Base;
 using ColorMate.EF.Repositories.User;
 using System;
 using System.Collections.Generic;
@@ -11,11 +12,22 @@ namespace ColorMate.EF.UnitOfWork
     {
         private readonly ApplicationDbContext _context;
         public IUserRepository Users { get; private set; }
+        public IBaseRepository<TestQuestion> TestQuestions { get; private set; }
+        public IBaseRepository<TestResult> TestResults { get; private set; }
+        public IBaseRepository<UserAnswer> UserAnswers { get; private set; }
 
-        public UnitOfWork(ApplicationDbContext context, IUserRepository users)
+        public UnitOfWork(
+            ApplicationDbContext context,
+            IUserRepository users,
+            IBaseRepository<TestQuestion> testQuestions,
+            IBaseRepository<TestResult> testResults,
+            IBaseRepository<UserAnswer> userAnswers)
         {
             _context = context;
             Users = users;
+            TestQuestions = testQuestions;
+            TestResults = testResults;
+            UserAnswers = userAnswers;
         }
 
 

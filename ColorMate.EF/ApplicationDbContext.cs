@@ -10,13 +10,13 @@ namespace ColorMate.EF
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public DbSet<TestQuestions> TestQuestions { get; set; }
-        public DbSet<TestQuestionsByUser> TestQuestionsByUsers { get; set; }
-        public DbSet<ColorBlindType> ColorBlindTypes { get; set; }
+        public DbSet<TestQuestion> TestQuestions { get; set; }
+        public DbSet<UserAnswer> UserAnswers { get; set; }
+        public DbSet<TestResult> TestResults { get; set; }
 
+        public DbSet<ColorBlindType> ColorBlindTypes { get; set; }
         public DbSet<ImageByUser> ImagesByUsers { get; set; }
         public DbSet<OutfitRating> OutfitRatings { get; set; }
-        public DbSet<TestResult> TestResults { get; set; }
         public DbSet<Filter> Filters { get; set; }
 
 
@@ -27,23 +27,30 @@ namespace ColorMate.EF
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfigurationsFromAssembly(typeof(TestQuestionsByUserConfig).Assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationUserConfig).Assembly);
+
+
+            modelBuilder.Entity<TestResult>()
+                .HasMany(t => t.Answers)
+                .WithOne(ua => ua.TestResult)
+                .HasForeignKey(ua => ua.TestResultId);
+
+            modelBuilder.Entity<TestQuestion>()
+                .HasMany(t => t.Answers)
+                .WithOne(ua => ua.TestQuestion)
+                .HasForeignKey(ua => ua.TestQuestionId);
+
+
+            //modelBuilder.Entity<ColorBlindType>()
+            //    .HasMany(c => c.TestResults)
+            //    .WithOne(t => t.ColorBlindType)
+            //    .HasForeignKey(t => t.ColorBlindTypeId);
+
 
             modelBuilder.Entity<ColorBlindType>()
                  .HasOne(c => c.Filter)
                  .WithOne(f => f.ColorBlindType)
                  .HasForeignKey<Filter>(x => x.ColorBlindTypeId);
-
-
-            modelBuilder.Entity<ImageByUser>()
-                .HasOne(i => i.OutfitRating)
-                .WithOne(o => o.ImageByUser)
-                .HasForeignKey<OutfitRating>(x => x.ImageByUserId);
-
-            modelBuilder.Entity<ApplicationUser>()
-                .HasMany(u => u.ImagesByUser)
-                .WithOne(i => i.ApplicationUser)
-                .HasForeignKey(i => i.ApplicationUserId);
 
             modelBuilder.Entity<ApplicationUser>()
                 .HasMany(u => u.TestResults)
@@ -51,16 +58,42 @@ namespace ColorMate.EF
                 .HasForeignKey(t => t.ApplicationUserId);
 
 
-            modelBuilder.Entity<ColorBlindType>()
-                .HasMany(c => c.TestResults)
-                .WithOne(t => t.ColorBlindType)
-                .HasForeignKey(t => t.ColorBlindTypeId);
+            modelBuilder.Entity<ApplicationUser>()
+                .HasMany(u => u.ImagesByUser)
+                .WithOne(i => i.ApplicationUser)
+                .HasForeignKey(i => i.ApplicationUserId);
+
+
+            modelBuilder.Entity<ImageByUser>()
+                .HasOne(i => i.OutfitRating)
+                .WithOne(o => o.ImageByUser)
+                .HasForeignKey<OutfitRating>(x => x.ImageByUserId);
 
 
             modelBuilder.Entity<Filter>()
                 .HasMany(f => f.ImagesByUser)
                 .WithOne(i => i.Filter)
                 .HasForeignKey(i => i.FilterId);
+
+
+            modelBuilder.Entity<TestQuestion>().HasData(
+                new TestQuestion { Id = 1, ImageId = 1, NormalAnswer = "12", UsedForDiagnosis = true },
+                new TestQuestion { Id = 2, ImageId = 2, NormalAnswer = "8", UsedForDiagnosis = true },
+                new TestQuestion { Id = 3, ImageId = 3, NormalAnswer = "5", UsedForDiagnosis = true },
+                new TestQuestion { Id = 4, ImageId = 4, NormalAnswer = "29", UsedForDiagnosis = true },
+                new TestQuestion { Id = 5, ImageId = 5, NormalAnswer = "74", UsedForDiagnosis = true },
+                new TestQuestion { Id = 6, ImageId = 6, NormalAnswer = "7", UsedForDiagnosis = true },
+                new TestQuestion { Id = 7, ImageId = 7, NormalAnswer = "45", UsedForDiagnosis = true },
+                new TestQuestion { Id = 8, ImageId = 8, NormalAnswer = "2", UsedForDiagnosis = true },
+                new TestQuestion { Id = 9, ImageId = 9, NormalAnswer = "x", UsedForDiagnosis = true },
+                new TestQuestion { Id = 10, ImageId = 10, NormalAnswer = "16", UsedForDiagnosis = true },
+                new TestQuestion { Id = 11, ImageId = 11, NormalAnswer = "97", UsedForDiagnosis = true },
+
+                // Color Blind specific
+                new TestQuestion { Id = 12, ImageId = 12, NormalAnswer = "35", ProtanAnswer = "5", DeutanAnswer = "3", UsedForDiagnosis = false },
+                new TestQuestion { Id = 13, ImageId = 13, NormalAnswer = "96", ProtanAnswer = "6", DeutanAnswer = "9", UsedForDiagnosis = false }
+            );
+
 
 
             base.OnModelCreating(modelBuilder);
