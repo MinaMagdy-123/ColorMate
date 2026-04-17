@@ -37,6 +37,10 @@ namespace ColorMate.BL.UserService
 
         Task<bool> DeleteAccountAsync(string userId);
 
+        Task ForgotPasswordAsync(string email);
+
+        Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+
         //---------------------------------------------------
 
 

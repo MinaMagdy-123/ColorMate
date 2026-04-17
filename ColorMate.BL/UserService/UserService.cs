@@ -6,6 +6,7 @@ using ColorMate.EF.Repositories.User;
 using ColorMate.EF.UnitOfWork;
 using JWT.DTOs;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -29,13 +30,14 @@ namespace ColorMate.BL.UserService
         private readonly IConfiguration config;
         private readonly Settings.JWT _jwt;
         private readonly IFacebookAuthService _facebookAuthService;
+        private readonly IEmailSender _emailSender;
 
 
         public UserService(IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IOptions<Settings.JWT> jwt,
-            IConfiguration config,IFacebookAuthService facebookAuthService )
+            IConfiguration config, IFacebookAuthService facebookAuthService, IEmailSender emailSender)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
@@ -43,6 +45,7 @@ namespace ColorMate.BL.UserService
             _jwt = jwt.Value;
             this.config = config;
             _facebookAuthService = facebookAuthService;
+            _emailSender = emailSender;
         }
 
 
@@ -340,6 +343,43 @@ namespace ColorMate.BL.UserService
             return result.Succeeded;
         }
 
+        public async Task ForgotPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            // security
+            if (user == null || !user.EmailConfirmed)
+                return;
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var encodedToken = Uri.EscapeDataString(token);
+
+            // deep link
+            var resetLink = $"colormate://reset-password?email={email}&token={encodedToken}";
+
+            var message = $@"
+                <h3>Password Reset</h3>
+                <p>Click the link below to reset your password:</p>
+                <a href='{resetLink}'>Reset Password</a>
+            ";
+
+            await _emailSender.SendEmailAsync(user.Email, "Reset Password", message);
+        }
+
+        public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return false;
+
+            var decodedToken = Uri.UnescapeDataString(token);
+
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, newPassword);
+
+            return result.Succeeded;
+        }
 
         //-----------------------------------------------------------
 

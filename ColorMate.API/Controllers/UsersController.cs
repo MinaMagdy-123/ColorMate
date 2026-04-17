@@ -1,6 +1,7 @@
 ﻿using ColorMate.BL.UserService;
 using ColorMate.Core.DTOs;
 using ColorMate.Core.DTOs.FacebookDto;
+using ColorMate.Core.DTOs.Forgot_ResetPasswordDto;
 using ColorMate.Core.Models;
 using Google.Apis.Auth;
 using JWT.DTOs;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -161,6 +163,55 @@ namespace ColorMate.API.Controllers
             return Ok(new { message = "Account successfully deleted." });
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
+                return BadRequest("Email is required.");
+
+            var email = dto.Email.Trim();
+
+            if (!new EmailAddressAttribute().IsValid(email))
+                return BadRequest("Invalid email format.");
+
+            await _userService.ForgotPasswordAsync(email);
+
+            return Ok(new { message = "If the email exists, the reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (dto == null)
+                return BadRequest("Invalid request.");
+
+            if (string.IsNullOrWhiteSpace(dto.Email) ||
+                string.IsNullOrWhiteSpace(dto.Token) ||
+                string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                return BadRequest("Email, token, and new password are required.");
+            }
+
+            if (dto.NewPassword.Length < 6)
+                return BadRequest("Password must be at least 6 characters.");
+
+            var result = await _userService.ResetPasswordAsync(
+                dto.Email.Trim(),
+                dto.Token,
+                dto.NewPassword
+            );
+
+            if (!result)
+                return BadRequest("Invalid or expired token.");
+
+            return Ok(new { message = "Password reset successful." });
+        }
 
         //-----------------------------------------------------------
 
