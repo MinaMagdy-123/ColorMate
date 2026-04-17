@@ -59,20 +59,6 @@ namespace ColorMate.EF.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ColorBlindTypes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ColorBlindTypes", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TestQuestions",
                 columns: table => new
                 {
@@ -196,6 +182,48 @@ namespace ColorMate.EF.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ObjDetectionsWithImages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OriginalImage = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ObjDetectionsWithImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ObjDetectionsWithImages_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OutfitRatingsWithImages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OriginalImage = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    Recommendation = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Score = table.Column<int>(type: "int", nullable: false),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutfitRatingsWithImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OutfitRatingsWithImages_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RefreshToken",
                 columns: table => new
                 {
@@ -219,26 +247,6 @@ namespace ColorMate.EF.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Filters",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ColorBlindTypeId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Filters", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Filters_ColorBlindTypes_ColorBlindTypeId",
-                        column: x => x.ColorBlindTypeId,
-                        principalTable: "ColorBlindTypes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TestResults",
                 columns: table => new
                 {
@@ -246,8 +254,7 @@ namespace ColorMate.EF.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TestTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Diagnosis = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ColorBlindTypeId = table.Column<int>(type: "int", nullable: true)
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -258,38 +265,28 @@ namespace ColorMate.EF.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TestResults_ColorBlindTypes_ColorBlindTypeId",
-                        column: x => x.ColorBlindTypeId,
-                        principalTable: "ColorBlindTypes",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "ImagesByUsers",
+                name: "ObjsFromDetection",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    OriginalImage = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProcessedImageByFilter = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    FilterId = table.Column<int>(type: "int", nullable: true)
+                    ClassName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Confidence = table.Column<double>(type: "float", nullable: false),
+                    Bbox = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ObjDetectionWithImageId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ImagesByUsers", x => x.Id);
+                    table.PrimaryKey("PK_ObjsFromDetection", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ImagesByUsers_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
-                        principalTable: "AspNetUsers",
+                        name: "FK_ObjsFromDetection_ObjDetectionsWithImages_ObjDetectionWithImageId",
+                        column: x => x.ObjDetectionWithImageId,
+                        principalTable: "ObjDetectionsWithImages",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ImagesByUsers_Filters_FilterId",
-                        column: x => x.FilterId,
-                        principalTable: "Filters",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -316,27 +313,6 @@ namespace ColorMate.EF.Migrations
                         name: "FK_UserAnswers_TestResults_TestResultId",
                         column: x => x.TestResultId,
                         principalTable: "TestResults",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OutfitRatings",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Recommendation = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Score = table.Column<int>(type: "int", nullable: false),
-                    ImageByUserId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OutfitRatings", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_OutfitRatings_ImagesByUsers_ImageByUserId",
-                        column: x => x.ImageByUserId,
-                        principalTable: "ImagesByUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -408,36 +384,24 @@ namespace ColorMate.EF.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Filters_ColorBlindTypeId",
-                table: "Filters",
-                column: "ColorBlindTypeId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ImagesByUsers_ApplicationUserId",
-                table: "ImagesByUsers",
+                name: "IX_ObjDetectionsWithImages_ApplicationUserId",
+                table: "ObjDetectionsWithImages",
                 column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ImagesByUsers_FilterId",
-                table: "ImagesByUsers",
-                column: "FilterId");
+                name: "IX_ObjsFromDetection_ObjDetectionWithImageId",
+                table: "ObjsFromDetection",
+                column: "ObjDetectionWithImageId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OutfitRatings_ImageByUserId",
-                table: "OutfitRatings",
-                column: "ImageByUserId",
-                unique: true);
+                name: "IX_OutfitRatingsWithImages_ApplicationUserId",
+                table: "OutfitRatingsWithImages",
+                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TestResults_ApplicationUserId",
                 table: "TestResults",
                 column: "ApplicationUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TestResults_ColorBlindTypeId",
-                table: "TestResults",
-                column: "ColorBlindTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserAnswers_TestQuestionId",
@@ -469,7 +433,10 @@ namespace ColorMate.EF.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "OutfitRatings");
+                name: "ObjsFromDetection");
+
+            migrationBuilder.DropTable(
+                name: "OutfitRatingsWithImages");
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");
@@ -481,7 +448,7 @@ namespace ColorMate.EF.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "ImagesByUsers");
+                name: "ObjDetectionsWithImages");
 
             migrationBuilder.DropTable(
                 name: "TestQuestions");
@@ -490,13 +457,7 @@ namespace ColorMate.EF.Migrations
                 name: "TestResults");
 
             migrationBuilder.DropTable(
-                name: "Filters");
-
-            migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
-                name: "ColorBlindTypes");
         }
     }
 }

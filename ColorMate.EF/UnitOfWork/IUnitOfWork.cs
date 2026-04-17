@@ -13,6 +13,10 @@ namespace ColorMate.EF.UnitOfWork
         IBaseRepository<TestQuestion> TestQuestions { get; }
         IBaseRepository<TestResult> TestResults { get; }
         IBaseRepository<UserAnswer> UserAnswers { get; }
+        IBaseRepository<ObjDetectionWithImage> ObjDetectionWithImages { get; }
+        IBaseRepository<OutfitRatingWithImage> OutfitRatingWithImages { get; }
+        IBaseRepository<FruitClassificationWithImage> FruitClassificationWithImages { get; }
+
         int Complete();
     }
 }

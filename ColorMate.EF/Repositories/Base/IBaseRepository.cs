@@ -9,6 +9,7 @@ namespace ColorMate.EF.Repositories.Base
         T GetById(int id);
 
         IEnumerable<T> GetAll();
+        IQueryable<T> GetAllQueryable();
 
         T Add(T entity);
 

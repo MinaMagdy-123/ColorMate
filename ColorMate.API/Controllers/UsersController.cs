@@ -126,7 +126,7 @@ namespace ColorMate.API.Controllers
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
@@ -137,6 +137,28 @@ namespace ColorMate.API.Controllers
                 return BadRequest(result.Message);
 
             return Ok(result);
+        }
+
+        [Authorize]
+        [HttpDelete("delete-account")]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new { message = "User is not authenticated." });
+            }
+
+            var isDeleted = await _userService.DeleteAccountAsync(userId);
+
+            if (!isDeleted)
+            {
+                return BadRequest(new { message = "Failed to delete account. User may not exist or an error occurred." });
+            }
+
+            return Ok(new { message = "Account successfully deleted." });
         }
 
 

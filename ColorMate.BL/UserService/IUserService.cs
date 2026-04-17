@@ -35,6 +35,8 @@ namespace ColorMate.BL.UserService
 
         Task<AuthDto> ChangePasswordAsync(string userId, ChangePasswordDto dto);
 
+        Task<bool> DeleteAccountAsync(string userId);
+
         //---------------------------------------------------
 
 

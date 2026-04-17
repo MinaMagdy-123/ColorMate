@@ -25,6 +25,10 @@ namespace ColorMate.EF.Repositories.Base
             return _context.Set<T>().ToList();
         }
 
+        public IQueryable<T> GetAllQueryable()
+        {
+            return _context.Set<T>();
+        }
 
         public T Add(T entity)
         {

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ColorMate.EF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260301144243_InitialCreate")]
+    [Migration("20260309023644_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace ColorMate.EF.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -117,51 +117,7 @@ namespace ColorMate.EF.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("ColorMate.Core.Models.ColorBlindType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ColorBlindTypes");
-                });
-
-            modelBuilder.Entity("ColorMate.Core.Models.Filter", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ColorBlindTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ColorBlindTypeId")
-                        .IsUnique();
-
-                    b.ToTable("Filters");
-                });
-
-            modelBuilder.Entity("ColorMate.Core.Models.ImageByUser", b =>
+            modelBuilder.Entity("ColorMate.Core.Models.ObjDetectionWithImage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -173,25 +129,17 @@ namespace ColorMate.EF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("FilterId")
-                        .HasColumnType("int");
-
                     b.Property<byte[]>("OriginalImage")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<byte[]>("ProcessedImageByFilter")
                         .HasColumnType("varbinary(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.HasIndex("FilterId");
-
-                    b.ToTable("ImagesByUsers");
+                    b.ToTable("ObjDetectionsWithImages");
                 });
 
-            modelBuilder.Entity("ColorMate.Core.Models.OutfitRating", b =>
+            modelBuilder.Entity("ColorMate.Core.Models.ObjFromDetection", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -199,8 +147,41 @@ namespace ColorMate.EF.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ImageByUserId")
+                    b.PrimitiveCollection<string>("Bbox")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClassName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Confidence")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ObjDetectionWithImageId")
                         .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ObjDetectionWithImageId");
+
+                    b.ToTable("ObjsFromDetection");
+                });
+
+            modelBuilder.Entity("ColorMate.Core.Models.OutfitRatingWithImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte[]>("OriginalImage")
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("Recommendation")
                         .IsRequired()
@@ -211,10 +192,9 @@ namespace ColorMate.EF.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ImageByUserId")
-                        .IsUnique();
+                    b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("OutfitRatings");
+                    b.ToTable("OutfitRatingsWithImages");
                 });
 
             modelBuilder.Entity("ColorMate.Core.Models.TestQuestion", b =>
@@ -354,9 +334,6 @@ namespace ColorMate.EF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("ColorBlindTypeId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Diagnosis")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -367,8 +344,6 @@ namespace ColorMate.EF.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId");
-
-                    b.HasIndex("ColorBlindTypeId");
 
                     b.ToTable("TestResults");
                 });
@@ -572,43 +547,37 @@ namespace ColorMate.EF.Migrations
                     b.Navigation("RefreshTokens");
                 });
 
-            modelBuilder.Entity("ColorMate.Core.Models.Filter", b =>
-                {
-                    b.HasOne("ColorMate.Core.Models.ColorBlindType", "ColorBlindType")
-                        .WithOne("Filter")
-                        .HasForeignKey("ColorMate.Core.Models.Filter", "ColorBlindTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ColorBlindType");
-                });
-
-            modelBuilder.Entity("ColorMate.Core.Models.ImageByUser", b =>
+            modelBuilder.Entity("ColorMate.Core.Models.ObjDetectionWithImage", b =>
                 {
                     b.HasOne("ColorMate.Core.Models.ApplicationUser", "ApplicationUser")
-                        .WithMany("ImagesByUser")
+                        .WithMany("ObjDetectionWithImage")
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ColorMate.Core.Models.Filter", "Filter")
-                        .WithMany("ImagesByUser")
-                        .HasForeignKey("FilterId");
-
                     b.Navigation("ApplicationUser");
-
-                    b.Navigation("Filter");
                 });
 
-            modelBuilder.Entity("ColorMate.Core.Models.OutfitRating", b =>
+            modelBuilder.Entity("ColorMate.Core.Models.ObjFromDetection", b =>
                 {
-                    b.HasOne("ColorMate.Core.Models.ImageByUser", "ImageByUser")
-                        .WithOne("OutfitRating")
-                        .HasForeignKey("ColorMate.Core.Models.OutfitRating", "ImageByUserId")
+                    b.HasOne("ColorMate.Core.Models.ObjDetectionWithImage", "ObjDetectionWithImage")
+                        .WithMany("Objects")
+                        .HasForeignKey("ObjDetectionWithImageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ImageByUser");
+                    b.Navigation("ObjDetectionWithImage");
+                });
+
+            modelBuilder.Entity("ColorMate.Core.Models.OutfitRatingWithImage", b =>
+                {
+                    b.HasOne("ColorMate.Core.Models.ApplicationUser", "ApplicationUser")
+                        .WithMany("OutfitRatingWithImage")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("ColorMate.Core.Models.TestResult", b =>
@@ -618,10 +587,6 @@ namespace ColorMate.EF.Migrations
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("ColorMate.Core.Models.ColorBlindType", null)
-                        .WithMany("TestResults")
-                        .HasForeignKey("ColorBlindTypeId");
 
                     b.Navigation("ApplicationUser");
                 });
@@ -698,28 +663,16 @@ namespace ColorMate.EF.Migrations
 
             modelBuilder.Entity("ColorMate.Core.Models.ApplicationUser", b =>
                 {
-                    b.Navigation("ImagesByUser");
+                    b.Navigation("ObjDetectionWithImage");
+
+                    b.Navigation("OutfitRatingWithImage");
 
                     b.Navigation("TestResults");
                 });
 
-            modelBuilder.Entity("ColorMate.Core.Models.ColorBlindType", b =>
+            modelBuilder.Entity("ColorMate.Core.Models.ObjDetectionWithImage", b =>
                 {
-                    b.Navigation("Filter")
-                        .IsRequired();
-
-                    b.Navigation("TestResults");
-                });
-
-            modelBuilder.Entity("ColorMate.Core.Models.Filter", b =>
-                {
-                    b.Navigation("ImagesByUser");
-                });
-
-            modelBuilder.Entity("ColorMate.Core.Models.ImageByUser", b =>
-                {
-                    b.Navigation("OutfitRating")
-                        .IsRequired();
+                    b.Navigation("Objects");
                 });
 
             modelBuilder.Entity("ColorMate.Core.Models.TestQuestion", b =>

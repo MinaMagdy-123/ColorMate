@@ -18,11 +18,16 @@ namespace ColorMate.Core.Models
         public string LoginProvider { get; set; }
         public string? ProfilePictureUrl { get; set; }
 
-        public List<RefreshToken>? RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<OutfitRatingWithImage> OutfitRatingWithImage { get; set; } = new HashSet<OutfitRatingWithImage>();
 
-        public ICollection<ImageByUser> ImagesByUser { get; set; } = new HashSet<ImageByUser>();
+        public ICollection<FruitClassificationWithImage> FruitClassificationWithImage { get; set; } = new HashSet<FruitClassificationWithImage>();
+
+        public ICollection<ObjDetectionWithImage> ObjDetectionWithImage { get; set; } = new HashSet<ObjDetectionWithImage>();
 
         public ICollection<TestResult> TestResults { get; set; } = new HashSet<TestResult>();
+
+        public List<RefreshToken>? RefreshTokens { get; set; } = new List<RefreshToken>();
+
 
 
     }

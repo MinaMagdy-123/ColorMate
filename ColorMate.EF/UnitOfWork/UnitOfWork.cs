@@ -15,19 +15,30 @@ namespace ColorMate.EF.UnitOfWork
         public IBaseRepository<TestQuestion> TestQuestions { get; private set; }
         public IBaseRepository<TestResult> TestResults { get; private set; }
         public IBaseRepository<UserAnswer> UserAnswers { get; private set; }
+        public IBaseRepository<ObjDetectionWithImage> ObjDetectionWithImages { get; private set; }
+        public IBaseRepository<OutfitRatingWithImage> OutfitRatingWithImages { get; private set; }
+        public IBaseRepository<OutfitRatingWithImage> FruitClassificationWithImages { get; private set; }
+
+
 
         public UnitOfWork(
             ApplicationDbContext context,
             IUserRepository users,
             IBaseRepository<TestQuestion> testQuestions,
             IBaseRepository<TestResult> testResults,
-            IBaseRepository<UserAnswer> userAnswers)
+            IBaseRepository<UserAnswer> userAnswers,
+            IBaseRepository<ObjDetectionWithImage> objDetectionWithImages,
+            IBaseRepository<OutfitRatingWithImage> outfitRatingWithImages,
+            IBaseRepository<OutfitRatingWithImage> fruitClassificationWithImages)
         {
             _context = context;
             Users = users;
             TestQuestions = testQuestions;
             TestResults = testResults;
             UserAnswers = userAnswers;
+            ObjDetectionWithImages = objDetectionWithImages;
+            OutfitRatingWithImages = outfitRatingWithImages;
+            FruitClassificationWithImages = fruitClassificationWithImages;
         }
 
 

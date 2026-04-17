@@ -1,5 +1,8 @@
 using ColorMate.BL.EmailService;
 using ColorMate.BL.FacebookService;
+using ColorMate.BL.FruitsService;
+using ColorMate.BL.ObjDetectionService;
+using ColorMate.BL.OutfitRatingService;
 using ColorMate.BL.TestService;
 using ColorMate.BL.UserService;
 using ColorMate.Core.Models;
@@ -44,6 +47,30 @@ namespace ColorMate.API
             builder.Services.AddScoped<IFacebookAuthService, FacebookAuthService>();
             builder.Services.AddTransient<ITestService, TestService>();
 
+
+
+            builder.Services.AddHttpClient<IObjDetectionService, ObjDetectionService>(client =>
+            {
+                client.BaseAddress = new Uri(
+                    builder.Configuration.GetSection("ObjDetection:BaseUrl").Get<string>() ?? string.Empty
+                );
+            });
+
+            builder.Services.AddHttpClient<IOutfitRatingService, OutfitRatingService>(client =>
+            {
+                client.BaseAddress = new Uri(
+                    builder.Configuration.GetSection("OutfitRating:BaseUrl").Get<string>() ?? string.Empty
+                );
+            });
+
+            builder.Services.AddHttpClient<IFruitsService, FruitsService>(client =>
+            {
+                client.BaseAddress = new Uri(
+                    builder.Configuration.GetSection("FruitsClassification:BaseUrl").Get<string>() ?? string.Empty
+                );
+            });
+
+
             builder.Services.AddHttpClient();
 
 
@@ -63,26 +90,25 @@ namespace ColorMate.API
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; //unauthorize response
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddGoogle(options =>
-            {
-                var ClientId = builder.Configuration["Authentication:Google:ClientId"];
-                var ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-
-
-
-                options.ClientId = ClientId;
-                options.ClientSecret = ClientSecret;
-
-            }).AddFacebook(facebookOptions =>
-            {
-                var AppId = builder.Configuration["Authentication:Facebook:AppId"];
-                var AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
-                facebookOptions.AppId = AppId;
-                facebookOptions.AppSecret = AppSecret;
-
             })
+            //.AddGoogle(options =>
+            //{
+            //    var ClientId = builder.Configuration["Authentication:Google:ClientId"];
+            //    var ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+            //    options.ClientId = ClientId;
+            //    options.ClientSecret = ClientSecret;
+
+            //})
+            //.AddFacebook(facebookOptions =>
+            //{
+            //    var AppId = builder.Configuration["Authentication:Facebook:AppId"];
+            //    var AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+            //    facebookOptions.AppId = AppId;
+            //    facebookOptions.AppSecret = AppSecret;
+            //})
             .AddJwtBearer(o =>
             {
+                o.MapInboundClaims = false;
                 o.RequireHttpsMetadata = false;
                 o.SaveToken = false;
                 o.TokenValidationParameters = new TokenValidationParameters
@@ -152,20 +178,10 @@ namespace ColorMate.API
             //        In = ParameterLocation.Header,
             //        Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\"",
             //    });
-            //    swagger.AddSecurityRequirement(new OpenApiSecurityRequirement
+            //    swagger.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             //    {
-            //        {
-            //        new OpenApiSecurityScheme
-            //        {
-            //        Reference = new OpenApiReference
-            //        {
-            //        Type = ReferenceType.SecurityScheme,
-            //        Id = "Bearer"
-            //        }
-            //        },
-            //        new string[] {}
-            //        }
-            //        });
+            //        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+            //    });
             //});
             #endregion
 

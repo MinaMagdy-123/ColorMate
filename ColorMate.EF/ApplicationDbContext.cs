@@ -13,11 +13,10 @@ namespace ColorMate.EF
         public DbSet<TestQuestion> TestQuestions { get; set; }
         public DbSet<UserAnswer> UserAnswers { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
-
-        public DbSet<ColorBlindType> ColorBlindTypes { get; set; }
-        public DbSet<ImageByUser> ImagesByUsers { get; set; }
-        public DbSet<OutfitRating> OutfitRatings { get; set; }
-        public DbSet<Filter> Filters { get; set; }
+        public DbSet<OutfitRatingWithImage> OutfitRatingsWithImages { get; set; }
+        public DbSet<FruitClassificationWithImage> FruitClassificationWithImages { get; set; }
+        public DbSet<ObjDetectionWithImage> ObjDetectionsWithImages { get; set; }
+        public DbSet<ObjFromDetection> ObjsFromDetection { get; set; }
 
 
 
@@ -41,17 +40,6 @@ namespace ColorMate.EF
                 .HasForeignKey(ua => ua.TestQuestionId);
 
 
-            //modelBuilder.Entity<ColorBlindType>()
-            //    .HasMany(c => c.TestResults)
-            //    .WithOne(t => t.ColorBlindType)
-            //    .HasForeignKey(t => t.ColorBlindTypeId);
-
-
-            modelBuilder.Entity<ColorBlindType>()
-                 .HasOne(c => c.Filter)
-                 .WithOne(f => f.ColorBlindType)
-                 .HasForeignKey<Filter>(x => x.ColorBlindTypeId);
-
             modelBuilder.Entity<ApplicationUser>()
                 .HasMany(u => u.TestResults)
                 .WithOne(t => t.ApplicationUser)
@@ -59,21 +47,25 @@ namespace ColorMate.EF
 
 
             modelBuilder.Entity<ApplicationUser>()
-                .HasMany(u => u.ImagesByUser)
+                .HasMany(u => u.OutfitRatingWithImage)
+                .WithOne(i => i.ApplicationUser)
+                .HasForeignKey(i => i.ApplicationUserId);
+
+            modelBuilder.Entity<ApplicationUser>()
+                .HasMany(u => u.FruitClassificationWithImage)
+                .WithOne(i => i.ApplicationUser)
+                .HasForeignKey(i => i.ApplicationUserId);
+
+            modelBuilder.Entity<ApplicationUser>()
+                .HasMany(u => u.ObjDetectionWithImage)
                 .WithOne(i => i.ApplicationUser)
                 .HasForeignKey(i => i.ApplicationUserId);
 
 
-            modelBuilder.Entity<ImageByUser>()
-                .HasOne(i => i.OutfitRating)
-                .WithOne(o => o.ImageByUser)
-                .HasForeignKey<OutfitRating>(x => x.ImageByUserId);
-
-
-            modelBuilder.Entity<Filter>()
-                .HasMany(f => f.ImagesByUser)
-                .WithOne(i => i.Filter)
-                .HasForeignKey(i => i.FilterId);
+            modelBuilder.Entity<ObjDetectionWithImage>()
+                .HasMany(u => u.Objects)
+                .WithOne(i => i.ObjDetectionWithImage)
+                .HasForeignKey(i => i.ObjDetectionWithImageId);
 
 
             modelBuilder.Entity<TestQuestion>().HasData(
