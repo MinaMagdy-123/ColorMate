@@ -1,8 +1,6 @@
 using ColorMate.BL.EmailService;
 using ColorMate.BL.FacebookService;
-using ColorMate.BL.FruitsService;
-using ColorMate.BL.ObjDetectionService;
-using ColorMate.BL.OutfitRatingService;
+using ColorMate.BL.ProfileService;
 using ColorMate.BL.TestService;
 using ColorMate.BL.UserService;
 using ColorMate.Core.Models;
@@ -16,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
@@ -46,30 +45,8 @@ namespace ColorMate.API
             builder.Services.AddTransient<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IFacebookAuthService, FacebookAuthService>();
             builder.Services.AddTransient<ITestService, TestService>();
-
-
-
-            builder.Services.AddHttpClient<IObjDetectionService, ObjDetectionService>(client =>
-            {
-                client.BaseAddress = new Uri(
-                    builder.Configuration.GetSection("ObjDetection:BaseUrl").Get<string>() ?? string.Empty
-                );
-            });
-
-            builder.Services.AddHttpClient<IOutfitRatingService, OutfitRatingService>(client =>
-            {
-                client.BaseAddress = new Uri(
-                    builder.Configuration.GetSection("OutfitRating:BaseUrl").Get<string>() ?? string.Empty
-                );
-            });
-
-            builder.Services.AddHttpClient<IFruitsService, FruitsService>(client =>
-            {
-                client.BaseAddress = new Uri(
-                    builder.Configuration.GetSection("FruitsClassification:BaseUrl").Get<string>() ?? string.Empty
-                );
-            });
-
+            builder.Services.AddScoped<IProfileService, ProfileService>();
+            builder.Services.AddSingleton<IWebHostEnvironment>(builder.Environment);
 
             builder.Services.AddHttpClient();
 
@@ -79,7 +56,7 @@ namespace ColorMate.API
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(
                 options =>
                 {
-                    options.SignIn.RequireConfirmedEmail= true;
+                    options.SignIn.RequireConfirmedEmail = true;
                 }
                 ).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
@@ -90,22 +67,24 @@ namespace ColorMate.API
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; //unauthorize response
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            //.AddGoogle(options =>
-            //{
-            //    var ClientId = builder.Configuration["Authentication:Google:ClientId"];
-            //    var ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-            //    options.ClientId = ClientId;
-            //    options.ClientSecret = ClientSecret;
+            }).AddGoogle(options =>
+            {
+                var ClientId = builder.Configuration["Authentication_Google_ClientId"];
+                var ClientSecret = builder.Configuration["Authentication_Google_ClientSecret"];
 
-            //})
-            //.AddFacebook(facebookOptions =>
-            //{
-            //    var AppId = builder.Configuration["Authentication:Facebook:AppId"];
-            //    var AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
-            //    facebookOptions.AppId = AppId;
-            //    facebookOptions.AppSecret = AppSecret;
-            //})
+
+
+                options.ClientId = ClientId;
+                options.ClientSecret = ClientSecret;
+
+            }).AddFacebook(facebookOptions =>
+            {
+                var AppId = builder.Configuration["Authentication_Facebook_AppId"];
+                var AppSecret = builder.Configuration["Authentication_Facebook_AppSecret"];
+                facebookOptions.AppId = AppId;
+                facebookOptions.AppSecret = AppSecret;
+
+            })
             .AddJwtBearer(o =>
             {
                 o.MapInboundClaims = false;
@@ -178,10 +157,20 @@ namespace ColorMate.API
             //        In = ParameterLocation.Header,
             //        Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\"",
             //    });
-            //    swagger.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            //    swagger.AddSecurityRequirement(new OpenApiSecurityRequirement
             //    {
-            //        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
-            //    });
+            //        {
+            //        new OpenApiSecurityScheme
+            //        {
+            //        Reference = new OpenApiReference
+            //        {
+            //        Type = ReferenceType.SecurityScheme,
+            //        Id = "Bearer"
+            //        }
+            //        },
+            //        new string[] {}
+            //        }
+            //        });
             //});
             #endregion
 
@@ -190,15 +179,35 @@ namespace ColorMate.API
 
             var app = builder.Build();
 
+            app.UseDeveloperExceptionPage();
+
+
             // Configure the HTTP request pipeline.
+            //if (app.Environment.IsDevelopment())
+            //{
+            //    //app.MapOpenApi();
+            //    app.UseSwagger();
+            //    app.UseSwaggerUI();
+            //}
+
             if (app.Environment.IsDevelopment())
             {
-                //app.MapOpenApi();
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            else
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI(options =>
+                {
 
-            app.UseHttpsRedirection();
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+                    options.RoutePrefix = string.Empty;
+                    app.UseDeveloperExceptionPage();
+                });
+
+            }
+            // app.UseHttpsRedirection();
             app.UseCors();
 
             app.UseAuthentication();
@@ -206,7 +215,6 @@ namespace ColorMate.API
 
 
             app.MapControllers();
-
             app.Run();
         }
     }

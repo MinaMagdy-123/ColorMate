@@ -17,7 +17,9 @@ namespace ColorMate.EF.UnitOfWork
         public IBaseRepository<UserAnswer> UserAnswers { get; private set; }
         public IBaseRepository<ObjDetectionWithImage> ObjDetectionWithImages { get; private set; }
         public IBaseRepository<OutfitRatingWithImage> OutfitRatingWithImages { get; private set; }
-        public IBaseRepository<FruitClassificationWithImage> FruitClassificationWithImages { get; private set; }
+        public IBaseRepository<OutfitRatingWithImage> FruitClassificationWithImages { get; private set; }
+
+        IBaseRepository<FruitClassificationWithImage> IUnitOfWork.FruitClassificationWithImages => throw new NotImplementedException();
 
         public UnitOfWork(
             ApplicationDbContext context,
@@ -27,7 +29,7 @@ namespace ColorMate.EF.UnitOfWork
             IBaseRepository<UserAnswer> userAnswers,
             IBaseRepository<ObjDetectionWithImage> objDetectionWithImages,
             IBaseRepository<OutfitRatingWithImage> outfitRatingWithImages,
-            IBaseRepository<FruitClassificationWithImage> fruitClassificationWithImages)
+            IBaseRepository<OutfitRatingWithImage> fruitClassificationWithImages)
         {
             _context = context;
             Users = users;

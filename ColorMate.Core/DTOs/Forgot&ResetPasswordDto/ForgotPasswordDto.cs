@@ -6,6 +6,6 @@ namespace ColorMate.Core.DTOs.Forgot_ResetPasswordDto
 {
     public class ForgotPasswordDto
     {
-        public string Email { get; set; }=string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 }

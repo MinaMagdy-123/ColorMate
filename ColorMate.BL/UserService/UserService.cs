@@ -33,6 +33,7 @@ namespace ColorMate.BL.UserService
         private readonly IEmailSender _emailSender;
 
 
+
         public UserService(IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
@@ -380,6 +381,7 @@ namespace ColorMate.BL.UserService
 
             return result.Succeeded;
         }
+
 
         //-----------------------------------------------------------
 
