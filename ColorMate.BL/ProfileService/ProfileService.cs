@@ -28,7 +28,6 @@ namespace ColorMate.BL.ProfileService
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
                 ProfilePictureUrl = user.ProfilePictureUrl,
             };
         }
@@ -44,39 +43,77 @@ namespace ColorMate.BL.ProfileService
             if (!string.IsNullOrWhiteSpace(dto.LastName))
                 user.LastName = dto.LastName;
 
-            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
-                user.PhoneNumber = dto.PhoneNumber;
+            //if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            //    user.PhoneNumber = dto.PhoneNumber;
 
             var result = await _userManager.UpdateAsync(user);
             return result.Succeeded;
         }
 
+
         public async Task<string?> UploadProfilePictureAsync(string userId, IFormFile file)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return null;
+            if (user == null || file == null || file.Length == 0)
+                return null;
 
-            var webRoot = _env.WebRootPath
-                ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
+            var webRoot = Path.Combine(_env.ContentRootPath, "wwwroot");
             var folder = Path.Combine(webRoot, "profile-images");
+
             Directory.CreateDirectory(folder);
 
-            // Delete old image first
-            DeleteImageFile(user.ProfilePictureUrl, webRoot);
-
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var fileName = $"{userId}_{Guid.NewGuid()}{extension}";
+            var extension = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{extension}";
             var fullPath = Path.Combine(folder, fileName);
 
-            await using var stream = new FileStream(fullPath, FileMode.Create);
-            await file.CopyToAsync(stream);
+            var logPath = Path.Combine(_env.ContentRootPath, "upload-log.txt");
+
+            File.AppendAllText(logPath,
+                $"Time: {DateTime.Now}\n" +
+                $"WebRoot: {webRoot}\n" +
+                $"Folder: {folder}\n" +
+                $"FullPath: {fullPath}\n" +
+                "--------------------------\n"
+            );
+
+            await using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
 
             user.ProfilePictureUrl = $"/profile-images/{fileName}";
             await _userManager.UpdateAsync(user);
 
             return user.ProfilePictureUrl;
         }
+        #region old uploadprofile    
+        //public async Task<string?> UploadProfilePictureAsync(string userId, IFormFile file)
+        //{
+        //    var user = await _userManager.FindByIdAsync(userId);
+        //    if (user == null) return null;
+
+        //    var webRoot = _env.WebRootPath
+        //        ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+        //    var folder = Path.Combine(webRoot, "profile-images");
+        //    Directory.CreateDirectory(folder);
+
+        //    // Delete old image first
+        //    DeleteImageFile(user.ProfilePictureUrl, webRoot);
+
+        //    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        //    var fileName = $"{userId}_{Guid.NewGuid()}{extension}";
+        //    var fullPath = Path.Combine(folder, fileName);
+
+        //    await using var stream = new FileStream(fullPath, FileMode.Create);
+        //    await file.CopyToAsync(stream);
+
+        //    user.ProfilePictureUrl = $"/profile-images/{fileName}";
+        //    await _userManager.UpdateAsync(user);
+
+        //    return user.ProfilePictureUrl;
+        //} 
+        #endregion
 
         public async Task<bool> DeleteProfilePictureAsync(string userId)
         {

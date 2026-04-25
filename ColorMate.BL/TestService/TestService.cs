@@ -27,7 +27,8 @@ namespace ColorMate.BL.TestService
 
             var _plates = _unitOfWork.TestQuestions.GetAll().ToDictionary(q => q.ImageId);
 
-            int normalCount = 0;
+            int diagnosisNormalCount = 0;
+            int classificationNormalCount = 0;
             int protanCount = 0;
             int deutanCount = 0;
 
@@ -47,7 +48,7 @@ namespace ColorMate.BL.TestService
                 if (answer.Value == questionDB.NormalAnswer)
                 {
                     userAnswer.IsCorrect = true;
-                    normalCount++;
+                    diagnosisNormalCount++;
                 }
                 else
                 {
@@ -76,7 +77,7 @@ namespace ColorMate.BL.TestService
                 if (answer.Value == questionDB.NormalAnswer)
                 {
                     userAnswer.IsCorrect = true;
-                    normalCount++;
+                    classificationNormalCount++;
                 }
                 else
                 {
@@ -96,20 +97,21 @@ namespace ColorMate.BL.TestService
             }
 
 
-            if (normalCount >= 10)
+            if (diagnosisNormalCount >= 10)
             {
-                result.Diagnosis = "Normal";
+                if (classificationNormalCount < 2)
+                    result.Diagnosis = "Normal (retest recommended)";
+                else
+                    result.Diagnosis = "Normal";
             }
-            else if (normalCount <= 7)
+            else if (diagnosisNormalCount < 8)
             {
                 if (protanCount > deutanCount)
-                {
                     result.Diagnosis = "protan";
-                }
-                else
-                {
+                else if (deutanCount > protanCount)
                     result.Diagnosis = "deutan";
-                }
+                else
+                    result.Diagnosis = "uncertainty";
             }
             else
             {
@@ -123,7 +125,7 @@ namespace ColorMate.BL.TestService
             {
                 TestTime = DateTime.Now,
                 Diagnosis = result.Diagnosis,
-                CorrectAnswerCount = normalCount,
+                CorrectAnswerCount = diagnosisNormalCount,
                 DeutanAnswerCount = deutanCount,
                 ProtanAnswerCount = protanCount
             };

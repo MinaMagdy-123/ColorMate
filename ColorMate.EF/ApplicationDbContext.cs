@@ -83,7 +83,10 @@ namespace ColorMate.EF
 
                 // Color Blind specific
                 new TestQuestion { Id = 12, ImageId = 12, NormalAnswer = "35", ProtanAnswer = "5", DeutanAnswer = "3", UsedForDiagnosis = false },
-                new TestQuestion { Id = 13, ImageId = 13, NormalAnswer = "96", ProtanAnswer = "6", DeutanAnswer = "9", UsedForDiagnosis = false }
+                new TestQuestion { Id = 13, ImageId = 13, NormalAnswer = "96", ProtanAnswer = "6", DeutanAnswer = "9", UsedForDiagnosis = false },
+                new TestQuestion { Id = 14, ImageId = 14, NormalAnswer = "26", ProtanAnswer = "6", DeutanAnswer = "2", UsedForDiagnosis = false }
+
+
             );
 
 

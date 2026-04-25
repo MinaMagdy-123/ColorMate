@@ -21,8 +21,8 @@ namespace ColorMate.BL.FacebookService
         public FacebookAuthService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
-            AppId = configuration["Authentication:Facebook:AppId"];
-            AppSecret = configuration["Authentication:Facebook:AppSecret"];
+            AppId = configuration["Authentication_Facebook_AppId"];
+            AppSecret = configuration["Authentication_Facebook_AppSecret"];
         }
 
 

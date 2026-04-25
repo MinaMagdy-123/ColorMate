@@ -232,7 +232,7 @@ namespace ColorMate.API.Controllers
                     googleDto.IdToken,
                     new GoogleJsonWebSignature.ValidationSettings
                     {
-                        Audience = new[] { _config["Authentication:Google:ClientId"] }
+                        Audience = new[] { _config["Authentication_Google_ClientId"] }
                     });
             }
             catch

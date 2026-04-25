@@ -34,8 +34,8 @@ namespace ColorMate.BL.EmailService
             );
 
             await client.AuthenticateAsync(
-                _configuration["Email:SmtpUser"],
-                _configuration["Email:SmtpPass"]
+                _configuration["Email_SmtpUser"],
+                _configuration["Email_SmtpPass"]
             );
 
             await client.SendAsync(emailMessage);

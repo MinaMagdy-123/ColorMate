@@ -13,6 +13,5 @@ namespace ColorMate.Core.DTOs.ProfileDto
         [Required]
         public string LastName { get; set; }
 
-        public string PhoneNumber { get; set; }
     }
 }

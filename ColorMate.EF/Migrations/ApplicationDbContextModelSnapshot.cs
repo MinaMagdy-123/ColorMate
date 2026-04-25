@@ -114,6 +114,36 @@ namespace ColorMate.EF.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("ColorMate.Core.Models.FruitClassificationWithImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("Confidence")
+                        .HasColumnType("float");
+
+                    b.Property<byte[]>("OriginalImage")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("PredictedClass")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.ToTable("FruitClassificationWithImages");
+                });
+
             modelBuilder.Entity("ColorMate.Core.Models.ObjDetectionWithImage", b =>
                 {
                     b.Property<int>("Id")
@@ -314,6 +344,15 @@ namespace ColorMate.EF.Migrations
                             DeutanAnswer = "9",
                             ImageId = 13,
                             NormalAnswer = "96",
+                            ProtanAnswer = "6",
+                            UsedForDiagnosis = false
+                        },
+                        new
+                        {
+                            Id = 14,
+                            DeutanAnswer = "2",
+                            ImageId = 14,
+                            NormalAnswer = "26",
                             ProtanAnswer = "6",
                             UsedForDiagnosis = false
                         });
@@ -544,6 +583,17 @@ namespace ColorMate.EF.Migrations
                     b.Navigation("RefreshTokens");
                 });
 
+            modelBuilder.Entity("ColorMate.Core.Models.FruitClassificationWithImage", b =>
+                {
+                    b.HasOne("ColorMate.Core.Models.ApplicationUser", "ApplicationUser")
+                        .WithMany("FruitClassificationWithImage")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+                });
+
             modelBuilder.Entity("ColorMate.Core.Models.ObjDetectionWithImage", b =>
                 {
                     b.HasOne("ColorMate.Core.Models.ApplicationUser", "ApplicationUser")
@@ -660,6 +710,8 @@ namespace ColorMate.EF.Migrations
 
             modelBuilder.Entity("ColorMate.Core.Models.ApplicationUser", b =>
                 {
+                    b.Navigation("FruitClassificationWithImage");
+
                     b.Navigation("ObjDetectionWithImage");
 
                     b.Navigation("OutfitRatingWithImage");

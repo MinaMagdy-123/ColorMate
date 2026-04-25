@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -117,6 +118,19 @@ namespace ColorMate.API
                 });
 
             });
+            //builder.Services.AddCors(options =>
+            //{
+            //    options.AddPolicy("AllowFrontend", policy =>
+            //    {
+            //        policy
+            //            .WithOrigins(
+            //                "http://127.0.0.1:5500",
+            //                "http://localhost:5500"
+            //            )
+            //            .AllowAnyMethod()
+            //            .AllowAnyHeader();
+            //    });
+            //});
 
             //var Google = builder.Configuration.GetSection("Authentication:Google");
             //builder.Services.AddAuthentication().AddGoogle(options =>
@@ -179,8 +193,14 @@ namespace ColorMate.API
 
             var app = builder.Build();
 
-            app.UseDeveloperExceptionPage();
-
+            // app.UseDeveloperExceptionPage();
+            //app.UseStaticFiles();
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
+                RequestPath = ""
+            });
 
             // Configure the HTTP request pipeline.
             //if (app.Environment.IsDevelopment())
