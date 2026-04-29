@@ -125,7 +125,7 @@ namespace ColorMate.BL.TestService
             {
                 TestTime = DateTime.Now,
                 Diagnosis = result.Diagnosis,
-                CorrectAnswerCount = diagnosisNormalCount,
+                CorrectAnswerCount = diagnosisNormalCount + classificationNormalCount,
                 DeutanAnswerCount = deutanCount,
                 ProtanAnswerCount = protanCount
             };
