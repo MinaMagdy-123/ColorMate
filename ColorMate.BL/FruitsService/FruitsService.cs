@@ -33,7 +33,9 @@ namespace ColorMate.BL.FruitsService
 
                 content.Add(streamContent, "image", requestDto.UploadedImage.FileName);
 
-                var response = await _httpClient.PostAsync(string.Empty, content);
+                _httpClient.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+
+                var response = await _httpClient.PostAsync("predict", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -70,8 +72,12 @@ namespace ColorMate.BL.FruitsService
 
                 return classificationResult;
             }
-            catch
+            catch (Exception ex)
             {
+                // Temporary: Log the error to the console to see what's wrong
+                Console.WriteLine($"Error: {ex.Message}");
+                if (ex.InnerException != null) Console.WriteLine($"Inner: {ex.InnerException.Message}");
+
                 return new FruitsResponseDto
                 {
                     Success = false,

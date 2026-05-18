@@ -33,7 +33,9 @@ namespace ColorMate.BL.ObjDetectionService
 
                 content.Add(streamContent, "file", requestDto.uploadedImage.FileName);
 
-                var response = await _httpClient.PostAsync(string.Empty, content);
+                _httpClient.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+
+                var response = await _httpClient.PostAsync("detect", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -68,39 +70,39 @@ namespace ColorMate.BL.ObjDetectionService
 
         public List<DetectionHistoryResponseDto> GetUserDetectionsHistory(string userId)
         {
-                var userHistory = _unitOfWork.ObjDetectionWithImages.GetAllQueryable().Where(od => od.ApplicationUserId == userId)
-                .Include(od => od.Objects)
-                .OrderByDescending(od => od.Id)
-                .ToList();
+            var userHistory = _unitOfWork.ObjDetectionWithImages.GetAllQueryable().Where(od => od.ApplicationUserId == userId)
+            .Include(od => od.Objects)
+            .OrderByDescending(od => od.Id)
+            .ToList();
 
-                if (!userHistory.Any())
+            if (!userHistory.Any())
+            {
+                return new List<DetectionHistoryResponseDto>();
+            }
+
+            var detectionsHistoryList = new List<DetectionHistoryResponseDto>();
+
+            foreach (var detection in userHistory)
+            {
+                // Convert byte array to Base64
+
+                string imageBase64 = null;
+                if (detection.OriginalImage != null && detection.OriginalImage.Length > 0)
                 {
-                    return new List<DetectionHistoryResponseDto>();
+                    imageBase64 = Convert.ToBase64String(detection.OriginalImage);
                 }
 
-                var detectionsHistoryList = new List<DetectionHistoryResponseDto>();
-
-                foreach (var detection in userHistory)
+                var detectionDto = new DetectionHistoryResponseDto
                 {
-                    // Convert byte array to Base64
+                    ImageBase64 = imageBase64,
+                    TotalObjects = detection.Objects?.Count ?? 0,
+                    Objects = detection.Objects?.ToList() ?? []
+                };
 
-                    string imageBase64 = null;
-                    if (detection.OriginalImage != null && detection.OriginalImage.Length > 0)
-                    {
-                        imageBase64 = Convert.ToBase64String(detection.OriginalImage);
-                    }
+                detectionsHistoryList.Add(detectionDto);
+            }
 
-                    var detectionDto = new DetectionHistoryResponseDto
-                    {
-                        ImageBase64 = imageBase64,
-                        TotalObjects = detection.Objects?.Count ?? 0,
-                        Objects = detection.Objects?.ToList() ?? []
-                    };
-
-                    detectionsHistoryList.Add(detectionDto);
-                }
-
-                return detectionsHistoryList;
+            return detectionsHistoryList;
         }
 
         private async Task SaveDetectionResult(ObjDetectionRequestDto requestDto, ObjDetectionResponseDto result, string userId)

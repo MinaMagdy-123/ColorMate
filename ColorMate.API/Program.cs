@@ -1,5 +1,7 @@
 using ColorMate.BL.EmailService;
 using ColorMate.BL.FacebookService;
+using ColorMate.BL.FruitsService;
+using ColorMate.BL.ObjDetectionService;
 using ColorMate.BL.ProfileService;
 using ColorMate.BL.TestService;
 using ColorMate.BL.UserService;
@@ -117,6 +119,27 @@ namespace ColorMate.API
                     .AllowAnyHeader();
                 });
 
+            });
+
+            builder.Services.AddHttpClient<IFruitsService, FruitsService>(client =>
+            {
+                var baseUrl = builder.Configuration["FruitsClassification:BaseUrl"];
+                if (string.IsNullOrEmpty(baseUrl))
+                {
+                    throw new Exception("FruitsClassification:BaseUrl is missing in appsettings.json");
+                }
+                client.BaseAddress = new Uri(baseUrl);
+            });
+
+
+            builder.Services.AddHttpClient<IObjDetectionService, ObjDetectionService>(client =>
+            {
+                var baseUrl = builder.Configuration["ObjDetection:BaseUrl"];
+                if (string.IsNullOrEmpty(baseUrl))
+                {
+                    throw new Exception("FruitsClassification:BaseUrl is missing in appsettings.json");
+                }
+                client.BaseAddress = new Uri(baseUrl);
             });
             //builder.Services.AddCors(options =>
             //{
