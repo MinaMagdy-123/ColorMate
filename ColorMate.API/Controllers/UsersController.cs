@@ -163,54 +163,71 @@ namespace ColorMate.API.Controllers
             return Ok(new { message = "Account successfully deleted." });
         }
 
-        [HttpPost("forgot-password")]
+
+        //------------------------ Reset Password Endpoints ----------------------------
+
+        [HttpPost("ForgotPassword")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
-                return BadRequest("Email is required.");
+            var (succeeded, message, otp) = await _userService.ForgotPasswordAsync(dto.Email);
 
-            var email = dto.Email.Trim();
+            if (!succeeded)
+                return BadRequest(new { message });
 
-            if (!new EmailAddressAttribute().IsValid(email))
-                return BadRequest("Invalid email format.");
-
-            await _userService.ForgotPasswordAsync(email);
-
-            return Ok(new { message = "If the email exists, the reset link has been sent." });
-        }
-
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (dto == null)
-                return BadRequest("Invalid request.");
-
-            if (string.IsNullOrWhiteSpace(dto.Email) ||
-                string.IsNullOrWhiteSpace(dto.Token) ||
-                string.IsNullOrWhiteSpace(dto.NewPassword))
-            {
-                return BadRequest("Email, token, and new password are required.");
-            }
-
-            if (dto.NewPassword.Length < 6)
-                return BadRequest("Password must be at least 6 characters.");
-
-            var result = await _userService.ResetPasswordAsync(
-                dto.Email.Trim(),
-                dto.Token,
-                dto.NewPassword
+            await _emailSender.SendEmailAsync(
+                dto.Email,
+                "Reset Password OTP",
+                $"Your password reset code is: {otp}"
             );
 
-            if (!result)
-                return BadRequest("Invalid or expired token.");
+            return Ok(new { message = "OTP sent to your email successfully." });
+        }
 
-            return Ok(new { message = "Password reset successful." });
+        [HttpPost("VerifyPasswordOtp")]
+        public async Task<IActionResult> VerifyPasswordOtp([FromBody] VerifyOtpDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var (succeeded, message, resetToken) = await _userService.VerifyPasswordOtpAsync(dto.Email, dto.OtpCode);
+
+            if (!succeeded)
+                return BadRequest(new { message });
+
+            return Ok(new { message, resetToken });
+        }
+
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var (result, message) = await _userService.ResetPasswordAsync(dto);
+
+            if (!result.Succeeded)
+                return BadRequest(new { message });
+
+            return Ok(new { message });
+        }
+
+        [HttpPost("ResendPasswordOtp")]
+        public async Task<IActionResult> ResendPasswordOtp([FromBody] ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var (succeeded, message, otp) = await _userService.ResendPasswordOtpAsync(dto.Email);
+
+            if (!succeeded)
+                return BadRequest(new { message });
+
+            await _emailSender.SendEmailAsync(
+                dto.Email,
+                "Your New Reset Password OTP",
+                $"Your new password reset code is: {otp}. It will expire in 10 minutes."
+            );
+
+            return Ok(new { message = "A new OTP has been sent to your email." });
         }
 
 

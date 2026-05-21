@@ -1,4 +1,5 @@
 ﻿using ColorMate.Core.DTOs;
+using ColorMate.Core.DTOs.Forgot_ResetPasswordDto;
 using ColorMate.Core.Models;
 using JWT.DTOs;
 using Microsoft.AspNetCore.Identity;
@@ -37,9 +38,13 @@ namespace ColorMate.BL.UserService
 
         Task<bool> DeleteAccountAsync(string userId);
 
-        Task ForgotPasswordAsync(string email);
 
-        Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+        // --- Forgot & Reset Password Workflow ---
+        Task<(bool Succeeded, string Message, string? Otp)> ForgotPasswordAsync(string email);
+        Task<(bool Succeeded, string Message, string? ResetToken)> VerifyPasswordOtpAsync(string email, string code);
+        Task<(IdentityResult Result, string Message)> ResetPasswordAsync(ResetPasswordDto dto);
+        Task<(bool Succeeded, string Message, string? Otp)> ResendPasswordOtpAsync(string email);
+
 
         //---------------------------------------------------
 

@@ -1,6 +1,7 @@
 ﻿using ColorMate.BL.FacebookService;
 using ColorMate.BL.Settings;
 using ColorMate.Core.DTOs;
+using ColorMate.Core.DTOs.Forgot_ResetPasswordDto;
 using ColorMate.Core.Models;
 using ColorMate.EF.Repositories.User;
 using ColorMate.EF.UnitOfWork;
@@ -344,42 +345,86 @@ namespace ColorMate.BL.UserService
             return result.Succeeded;
         }
 
-        public async Task ForgotPasswordAsync(string email)
+
+        //------------------------ Reset Password Workflow ----------------------------
+
+        public async Task<(bool Succeeded, string Message, string? Otp)> ForgotPasswordAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return (false, "User not found.", null);
 
-            // security
-            if (user == null || !user.EmailConfirmed)
-                return;
+            var otp = new Random().Next(100000, 999999).ToString();
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            user.EmailVerificationCode = otp;
+            user.EmailCodeExpiration = DateTime.UtcNow.AddMinutes(10);
 
-            var encodedToken = Uri.EscapeDataString(token);
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return (false, "Error updating user data.", null);
 
-            // deep link
-            var resetLink = $"colormate://reset-password?email={email}&token={encodedToken}";
-
-            var message = $@"
-                <h3>Password Reset</h3>
-                <p>Click the link below to reset your password:</p>
-                <a href='{resetLink}'>Reset Password</a>
-            ";
-
-            await _emailSender.SendEmailAsync(user.Email, "Reset Password", message);
+            return (true, "OTP generated successfully.", otp);
         }
 
-        public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
+        public async Task<(bool Succeeded, string Message, string? ResetToken)> VerifyPasswordOtpAsync(string email, string code)
         {
             var user = await _userManager.FindByEmailAsync(email);
-
             if (user == null)
-                return false;
+                return (false, "User not found.", null);
 
-            var decodedToken = Uri.UnescapeDataString(token);
+            if (user.EmailVerificationCode?.Trim() != code.Trim())
+                return (false, "Invalid OTP code.", null);
 
-            var result = await _userManager.ResetPasswordAsync(user, decodedToken, newPassword);
+            if (user.EmailCodeExpiration < DateTime.UtcNow)
+                return (false, "OTP code expired.", null);
 
-            return result.Succeeded;
+            user.EmailVerificationCode = null;
+            user.EmailCodeExpiration = null;
+            await _userManager.UpdateAsync(user);
+
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            return (true, "OTP verified successfully.", resetToken);
+        }
+
+        public async Task<(IdentityResult Result, string Message)> ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null)
+                return (IdentityResult.Failed(new IdentityError { Description = "User not found." }), "User not found.");
+
+            var result = await _userManager.ResetPasswordAsync(user, dto.ResetToken, dto.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return (result, errors);
+            }
+
+            foreach (var token in user.RefreshTokens)
+            {
+                token.RevokedOn = DateTime.UtcNow;
+            }
+            await _userManager.UpdateAsync(user);
+
+            return (result, "Password has been reset successfully.");
+        }
+
+        public async Task<(bool Succeeded, string Message, string? Otp)> ResendPasswordOtpAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return (false, "User not found.", null);
+
+            var newOtp = new Random().Next(100000, 999999).ToString();
+
+            user.EmailVerificationCode = newOtp;
+            user.EmailCodeExpiration = DateTime.UtcNow.AddMinutes(10);
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return (false, "Failed to update security code.", null);
+
+            return (true, "New OTP generated successfully.", newOtp);
         }
 
 
