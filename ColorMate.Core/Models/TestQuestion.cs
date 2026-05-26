@@ -10,7 +10,7 @@ namespace ColorMate.Core.Models
         public int ImageId { get; set; }
         public string? NormalAnswer { get; set; }
 
-        //  ------------- for last two questions -----------
+        //  ------------- for last three questions -----------
         public string? ProtanAnswer { get; set; }
         public string? DeutanAnswer { get; set; }
 

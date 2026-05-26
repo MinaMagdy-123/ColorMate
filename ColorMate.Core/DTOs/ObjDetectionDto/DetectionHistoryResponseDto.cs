@@ -9,6 +9,6 @@ namespace ColorMate.Core.DTOs.ObjDetectionDto
     {
         public string ImageBase64 { get; set; }
         public int TotalObjects { get; set; }
-        public List<ObjFromDetection> Objects { get; set; } = new();
+        public List<DetectedObjectDto> Objects { get; set; } = new();
     }
 }

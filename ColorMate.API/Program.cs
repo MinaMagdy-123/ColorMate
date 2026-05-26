@@ -70,17 +70,16 @@ namespace ColorMate.API
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; //unauthorize response
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddGoogle(options =>
+            })
+            .AddGoogle(options =>
             {
                 var ClientId = builder.Configuration["Authentication_Google_ClientId"];
                 var ClientSecret = builder.Configuration["Authentication_Google_ClientSecret"];
-
-
-
                 options.ClientId = ClientId;
                 options.ClientSecret = ClientSecret;
 
-            }).AddFacebook(facebookOptions =>
+            })
+            .AddFacebook(facebookOptions =>
             {
                 var AppId = builder.Configuration["Authentication_Facebook_AppId"];
                 var AppSecret = builder.Configuration["Authentication_Facebook_AppSecret"];
@@ -221,7 +220,7 @@ namespace ColorMate.API
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
+                Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
                 RequestPath = ""
             });
 

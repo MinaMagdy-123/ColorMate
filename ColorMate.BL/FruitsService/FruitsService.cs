@@ -31,7 +31,7 @@ namespace ColorMate.BL.FruitsService
 
                 streamContent.Headers.ContentType = new MediaTypeHeaderValue(requestDto.UploadedImage.ContentType);
 
-                content.Add(streamContent, "image", requestDto.UploadedImage.FileName);
+                content.Add(streamContent, "file", requestDto.UploadedImage.FileName);
 
                 _httpClient.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
 

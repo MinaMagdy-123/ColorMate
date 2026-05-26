@@ -56,7 +56,7 @@ namespace ColorMate.API.Controllers
         // PUT /api/Profile/picture
         [HttpPut("picture")]
         [Consumes("multipart/form-data")]
-         public async Task<IActionResult> UpdateProfilePicture([FromForm] UploadProfilePictureDto dto)
+        public async Task<IActionResult> UpdateProfilePicture([FromForm] UploadProfilePictureDto dto)
         {
             if (dto == null || dto.Picture == null || dto.Picture.Length == 0)
                 return BadRequest(new { message = "Image is required" });

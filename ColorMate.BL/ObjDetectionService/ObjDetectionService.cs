@@ -96,7 +96,14 @@ namespace ColorMate.BL.ObjDetectionService
                 {
                     ImageBase64 = imageBase64,
                     TotalObjects = detection.Objects?.Count ?? 0,
-                    Objects = detection.Objects?.ToList() ?? []
+
+                    Objects = detection.Objects?.Select(obj => new DetectedObjectDto
+                    {
+                        ObjectId = obj.Id,
+                        ClassName = obj.ClassName,
+                        Confidence = obj.Confidence,
+                        Bbox = obj.Bbox ?? new List<int>()
+                    }).ToList() ?? new List<DetectedObjectDto>()
                 };
 
                 detectionsHistoryList.Add(detectionDto);
